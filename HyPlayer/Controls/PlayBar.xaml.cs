@@ -4,6 +4,8 @@ using HyPlayer.Pages;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Media.Playback;
 using Windows.Storage;
 using Windows.Storage.FileProperties;
@@ -161,6 +163,7 @@ namespace HyPlayer.Controls
                }
                ListBoxPlayList.SelectedIndex = HyPlayList.NowPlaying;
                TbSongTag.Text = HyPlayList.NowPlayingItem.AudioInfo.tag;
+               Btn_Share.IsEnabled = HyPlayList.NowPlayingItem.isOnline;
            }));
         }
 
@@ -243,38 +246,53 @@ namespace HyPlayer.Controls
             Common.PageMain.ExpandedPlayer.Visibility = Visibility.Visible;
             Common.PageMain.ExpandedPlayer.Navigate(typeof(ExpandedPlayer), null,
                 new EntranceNavigationTransitionInfo());
-            ConnectedAnimationService.GetForCurrentView().PrepareToAnimate("SongTitle", TbSongName);
-            if (AlbumImage.Visibility == Visibility.Visible)
+            if (Common.Setting.expandAnimation)
             {
-                ConnectedAnimationService.GetForCurrentView().PrepareToAnimate("SongImg", AlbumImage);
+                ConnectedAnimationService.GetForCurrentView().PrepareToAnimate("SongTitle", TbSongName);
+                if (GridSongInfoContainer.Visibility == Visibility.Visible)
+                {
+                    ConnectedAnimationService.GetForCurrentView().PrepareToAnimate("SongImg", AlbumImage);
+                }
+
+                ConnectedAnimationService.GetForCurrentView().PrepareToAnimate("SongArtist", TbSingerName);
+                Common.PageExpandedPlayer.StartExpandAnimation();
             }
 
-            ConnectedAnimationService.GetForCurrentView().PrepareToAnimate("SongArtist", TbSingerName);
-            Common.PageExpandedPlayer.StartExpandAnimation();
             GridSongInfo.Visibility = Visibility.Collapsed;
+            GridSongAdvancedOperation.Visibility = Visibility.Visible;
         }
 
         public void ButtonCollapse_OnClick(object sender, RoutedEventArgs e)
         {
             Common.PageExpandedPlayer.StartCollapseAnimation();
+            GridSongAdvancedOperation.Visibility = Visibility.Collapsed;
             GridSongInfo.Visibility = Visibility.Visible;
-            ConnectedAnimation anim1 = ConnectedAnimationService.GetForCurrentView().GetAnimation("SongTitle");
-            ConnectedAnimation anim2 = ConnectedAnimationService.GetForCurrentView().GetAnimation("SongImg");
-            ConnectedAnimation anim3 = ConnectedAnimationService.GetForCurrentView().GetAnimation("SongArtist");
-            anim3.Configuration = new DirectConnectedAnimationConfiguration();
-            if (anim2 != null)
+            if (Common.Setting.expandAnimation)
             {
-                anim2.Configuration = new DirectConnectedAnimationConfiguration();
-            }
+                ConnectedAnimation anim1 = null;
+                ConnectedAnimation anim2 = null;
+                ConnectedAnimation anim3 = null;
+                anim1 = ConnectedAnimationService.GetForCurrentView().GetAnimation("SongTitle");
+                anim2 = ConnectedAnimationService.GetForCurrentView().GetAnimation("SongImg");
+                anim3 = ConnectedAnimationService.GetForCurrentView().GetAnimation("SongArtist");
+                anim3.Configuration = new DirectConnectedAnimationConfiguration();
+                if (anim2 != null)
+                {
+                    anim2.Configuration = new DirectConnectedAnimationConfiguration();
+                }
 
-            anim1.Configuration = new DirectConnectedAnimationConfiguration();
-            anim3?.TryStart(TbSingerName);
-            anim1?.TryStart(TbSongName);
-            if (AlbumImage.Visibility == Visibility.Visible)
-            {
-                anim2?.TryStart(AlbumImage);
+                anim1.Configuration = new DirectConnectedAnimationConfiguration();
+                try
+                {
+                    anim3?.TryStart(TbSingerName);
+                    anim1?.TryStart(TbSongName);
+                    anim2?.TryStart(AlbumImage);
+                }
+                catch
+                {
+                    //ignore
+                }
             }
-
             ButtonExpand.Visibility = Visibility.Visible;
             ButtonCollapse.Visibility = Visibility.Collapsed;
             Common.PageExpandedPlayer.Dispose();
@@ -419,6 +437,45 @@ namespace HyPlayer.Controls
                 }
             }
             catch { }
+        }
+
+        private async void Btn_Sub_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (HyPlayList.NowPlayingItem.isOnline)
+            {
+                await new SongListSelect(HyPlayList.NowPlayingItem.NcPlayItem.sid).ShowAsync();
+            }
+        }
+
+        private void Btn_Down_OnClick(object sender, RoutedEventArgs e)
+        {
+            DownloadManager.AddDownload(HyPlayList.NowPlayingItem.ToNCSong());
+        }
+
+        private void Btn_Comment_OnClick(object sender, RoutedEventArgs e)
+        {
+            Common.BaseFrame.Navigate(typeof(Comments), (object)HyPlayList.NowPlayingItem.ToNCSong());
+            ButtonCollapse_OnClick(this, e);
+        }
+
+        private void Btn_Share_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (!HyPlayList.NowPlayingItem.isOnline) return;
+            DataTransferManager dataTransferManager = DataTransferManager.GetForCurrentView();
+
+            dataTransferManager.DataRequested += ((manager, args) =>
+            {
+                DataPackage dataPackage = new DataPackage();
+                dataPackage.SetWebLink(new Uri("https://music.163.com/#/song?id=" + HyPlayList.NowPlayingItem.NcPlayItem.sid));
+                dataPackage.Properties.Title = HyPlayList.NowPlayingItem.Name;
+                dataPackage.Properties.Description = string.Join(';', HyPlayList.NowPlayingItem.NcPlayItem.Artist.Select(t => t.name)) + "   -- 分享歌曲 来自 HyPlayer" ;
+                DataRequest request = args.Request;
+                request.Data = dataPackage;
+            });
+
+            //展示系统的共享ui
+            DataTransferManager.ShowShareUI();
+
         }
     }
 

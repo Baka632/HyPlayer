@@ -28,6 +28,7 @@ namespace HyPlayer
         public static Dictionary<string, object> GLOBAL = new Dictionary<string, object>();
         public static List<string> LikedSongs = new List<string>();
         public static KawazuConverter KawazuConv = null;
+        public static List<NCPlayList> MySongLists = new List<NCPlayList>();
 
         public static async void Invoke(Action action, Windows.UI.Core.CoreDispatcherPriority Priority = Windows.UI.Core.CoreDispatcherPriority.Normal)
         {
@@ -106,10 +107,18 @@ namespace HyPlayer
                     return ApplicationData.Current.LocalSettings.Values["toastLyric"].ToString() == "true";
                 return false;
             }
-            set
+            set => ApplicationData.Current.LocalSettings.Values["toastLyric"] = value ? "true" : "false";
+        }
+        
+        public bool expandAnimation
+        {
+            get
             {
-                ApplicationData.Current.LocalSettings.Values["toastLyric"] = value ? "true" : "false";
+                if (ApplicationData.Current.LocalSettings.Values.ContainsKey("expandAnimation"))
+                    return ApplicationData.Current.LocalSettings.Values["expandAnimation"].ToString() != "false";
+                return true;
             }
+            set => ApplicationData.Current.LocalSettings.Values["expandAnimation"] = value ? "true" : "false";
         }
     }
 

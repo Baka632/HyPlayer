@@ -115,6 +115,16 @@ namespace HyPlayer.Controls
         {
             DownloadManager.AddDownload(ncsong);
         }
+
+        private void Comments_Click(object sender, RoutedEventArgs e)
+        {
+            Common.BaseFrame.Navigate(typeof(Comments), ncsong);
+        }
+
+        private async void Btn_Sub_OnClick(object sender, RoutedEventArgs e)
+        {
+            await new SongListSelect(ncsong.sid).ShowAsync();
+        }
     }
 
 }
