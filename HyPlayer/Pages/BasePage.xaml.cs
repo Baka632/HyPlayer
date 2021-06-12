@@ -163,7 +163,7 @@ namespace HyPlayer.Pages
         }
 
 
-        private async void LoginDone()
+        private void LoginDone()
         {
             DialogLogin.Hide();
             //加载我喜欢的歌
@@ -202,20 +202,7 @@ namespace HyPlayer.Pages
                             }
                             else
                             {
-                                Common.MySongLists.Add(new NCPlayList()
-                                {
-                                    cover = jToken["coverImgUrl"].ToString(),
-                                    creater = new NCUser()
-                                    {
-                                        avatar = jToken["creator"]["avatarUrl"].ToString(),
-                                        id = jToken["creator"]["userId"].ToString(),
-                                        name = jToken["creator"]["nickname"].ToString(),
-                                        signature = jToken["creator"]["signature"].ToString()
-                                    },
-                                    plid = jToken["id"].ToString(),
-                                    name = jToken["name"].ToString(),
-                                    desc = jToken["description"].ToString()
-                                });
+                                Common.MySongLists.Add(NCPlayList.CreateFromJson(jToken));
                                 NavItemsMyList.MenuItems.Add(new NavigationViewItem()
                                 {
                                     Content = jToken["name"].ToString(),
@@ -353,7 +340,7 @@ namespace HyPlayer.Pages
             (bool isOk, JObject json) = await Common.ncapi.RequestAsync(CloudMusicApiProviders.SearchSuggest,
                 new Dictionary<string, object>() {{"keywords", sender.Text}, {"type", "mobile"}});
 
-            if (isOk && json["result"]["allMatch"].HasValues)
+            if (isOk && json["result"]["allMatch"] != null && json["result"]["allMatch"].HasValues)
             {
                 sender.ItemsSource = json["result"]["allMatch"].ToArray().ToList().Select(t => t["keyword"].ToString())
                     .ToList();

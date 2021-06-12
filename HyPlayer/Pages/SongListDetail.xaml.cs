@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Windows.UI.Input.Spatial;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
@@ -41,6 +42,7 @@ namespace HyPlayer.Pages
             TextBoxPLName.Text = playList.name;
             TextBlockDesc.Text = playList.desc;
             TextBoxAuthor.Text = playList.creater.name;
+            ToggleButtonLike.IsChecked = playList.subscribed;
         }
 
         public async void LoadSongListItem()
@@ -48,10 +50,10 @@ namespace HyPlayer.Pages
             if (playList.plid != "-666")
             {
                 (bool isOk, JObject json) = await Common.ncapi.RequestAsync(CloudMusicApiProviders.PlaylistDetail,
-                    new Dictionary<string, object>() { { "id", playList.plid }, });
+                    new Dictionary<string, object>() {{"id", playList.plid},});
                 if (isOk)
                 {
-                    int[] trackIds = json["playlist"]["trackIds"].Select(t => (int)t["id"]).Skip(page * 500).Take(500)
+                    int[] trackIds = json["playlist"]["trackIds"].Select(t => (int) t["id"]).Skip(page * 500).Take(500)
                         .ToArray();
                     if (trackIds.Length >= 500)
                     {
@@ -68,39 +70,19 @@ namespace HyPlayer.Pages
                     }
 
                     (isOk, json) = await Common.ncapi.RequestAsync(CloudMusicApiProviders.SongDetail,
-                        new Dictionary<string, object> { ["ids"] = string.Join(",", trackIds) });
+                        new Dictionary<string, object> {["ids"] = string.Join(",", trackIds)});
                     if (isOk)
                     {
                         int idx = page * 500;
                         foreach (JToken jToken in json["songs"])
                         {
-                            JObject song = (JObject)jToken;
+                            JObject song = (JObject) jToken;
                             if (string.IsNullOrEmpty(intelsong))
                             {
                                 intelsong = song["id"].ToString();
                             }
 
-                            NCSong NCSong = new NCSong()
-                            {
-                                Album = new NCAlbum()
-                                {
-                                    cover = song["al"]["picUrl"].ToString(),
-                                    id = song["al"]["id"].ToString(),
-                                    name = song["al"]["name"].ToString()
-                                },
-                                sid = song["id"].ToString(),
-                                songname = song["name"].ToString(),
-                                Artist = new List<NCArtist>(),
-                                LengthInMilliseconds = double.Parse(song["dt"].ToString())
-                            };
-                            song["ar"].ToList().ForEach(t =>
-                            {
-                                NCSong.Artist.Add(new NCArtist()
-                                {
-                                    id = t["id"].ToString(),
-                                    name = t["name"].ToString()
-                                });
-                            });
+                            NCSong NCSong = NCSong.CreateFromJson(song);
                             bool canplay =
                                 json["privileges"].ToList().Find(x => x["id"].ToString() == song["id"].ToString())[
                                     "st"].ToString() == "0";
@@ -124,28 +106,7 @@ namespace HyPlayer.Pages
                     int idx = 0;
                     foreach (JToken song in json["data"]["dailySongs"])
                     {
-
-                        NCSong NCSong = new NCSong()
-                        {
-                            Album = new NCAlbum()
-                            {
-                                cover = song["al"]["picUrl"].ToString(),
-                                id = song["al"]["id"].ToString(),
-                                name = song["al"]["name"].ToString()
-                            },
-                            sid = song["id"].ToString(),
-                            songname = song["name"].ToString(),
-                            Artist = new List<NCArtist>(),
-                            LengthInMilliseconds = double.Parse(song["dt"].ToString())
-                        };
-                        song["ar"].ToList().ForEach(t =>
-                        {
-                            NCSong.Artist.Add(new NCArtist()
-                            {
-                                id = t["id"].ToString(),
-                                name = t["name"].ToString()
-                            });
-                        });
+                        NCSong NCSong = NCSong.CreateFromJson(song);
                         bool canplay = true;
                         if (canplay)
                         {
@@ -156,7 +117,6 @@ namespace HyPlayer.Pages
                     }
                 }
             }
-
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -168,13 +128,16 @@ namespace HyPlayer.Pages
                 {
                     try
                     {
-                        ConnectedAnimation anim = ConnectedAnimationService.GetForCurrentView().GetAnimation("SongListExpand");
-                        ConnectedAnimation anim1 = ConnectedAnimationService.GetForCurrentView().GetAnimation("SongListExpandAcrylic");
+                        ConnectedAnimation anim = ConnectedAnimationService.GetForCurrentView()
+                            .GetAnimation("SongListExpand");
+                        ConnectedAnimation anim1 = ConnectedAnimationService.GetForCurrentView()
+                            .GetAnimation("SongListExpandAcrylic");
                         anim1?.TryStart(GridPersonalInformation);
                         anim?.TryStart(RectangleImage);
                     }
-                    catch { }
-
+                    catch
+                    {
+                    }
                 });
             }));
             await Task.Run((() =>
@@ -184,43 +147,21 @@ namespace HyPlayer.Pages
                     if (e.Parameter != null)
                     {
                         if (e.Parameter is NCPlayList)
-                            playList = (NCPlayList)e.Parameter;
+                            playList = (NCPlayList) e.Parameter;
                         else
                         {
                             string pid = e.Parameter.ToString();
 
-                            (bool isok, var json) = await Common.ncapi.RequestAsync(CloudMusicApiProviders.PlaylistDetail,
-                                new Dictionary<string, object>() { { "id", pid } });
+                            (bool isok, var json) = await Common.ncapi.RequestAsync(
+                                CloudMusicApiProviders.PlaylistDetail,
+                                new Dictionary<string, object>() {{"id", pid}});
                             if (isok)
                             {
-                                NCUser user;
-                                if (!json["playlist"]["creator"].HasValues)
-                                {
-                                    user = Common.LoginedUser;
-                                }
-                                else
-                                {
-                                    user = new NCUser()
-                                    {
-                                        avatar = json["playlist"]["creator"]["avatarUrl"].ToString(),
-                                        id = json["playlist"]["creator"]["userId"].ToString(),
-                                        name = json["playlist"]["creator"]["nickname"].ToString(),
-                                        signature = json["playlist"]["creator"]["signature"].ToString()
-                                    };
-                                }
-                                playList = new NCPlayList()
-                                {
-                                    cover = json["playlist"]["coverImgUrl"].ToString(),
-                                    creater = user,
-                                    desc = json["playlist"]["description"].ToString(),
-                                    name = json["playlist"]["name"].ToString(),
-                                    plid = json["playlist"]["id"].ToString()
-                                };
+                                playList = NCPlayList.CreateFromJson(json["playlist"]);
                             }
-
-
                         }
                     }
+
                     LoadSongListDetail();
                     LoadSongListItem();
                 });
@@ -236,7 +177,8 @@ namespace HyPlayer.Pages
                 {
                     HyPlayList.RemoveAllSong();
                     (bool isok, JObject json) = await Common.ncapi.RequestAsync(CloudMusicApiProviders.SongUrl,
-                        new Dictionary<string, object>() { { "id", string.Join(',', songs.Select(t => t.sid)) }, { "br", Common.Setting.audioRate } });
+                        new Dictionary<string, object>()
+                            {{"id", string.Join(',', songs.Select(t => t.sid))}, {"br", Common.Setting.audioRate}});
                     if (isok)
                     {
                         List<JToken> arr = json["data"].ToList();
@@ -259,6 +201,7 @@ namespace HyPlayer.Pages
                             {
                                 tag = (token["br"].ToObject<int>() / 1000).ToString() + "k";
                             }
+
                             NCPlayItem ncp = new NCPlayItem()
                             {
                                 tag = tag,
@@ -274,13 +217,13 @@ namespace HyPlayer.Pages
                             };
                             HyPlayList.AppendNCPlayItem(ncp);
                         }
+
                         HyPlayList.SongAppendDone();
 
                         HyPlayList.SongMoveTo(0);
                     }
                 }));
             }));
-
         }
 
 
@@ -290,93 +233,87 @@ namespace HyPlayer.Pages
             LoadSongListItem();
         }
 
-        private async void ButtonHeartBeat_OnClick(object sender, RoutedEventArgs e)
+        private void ButtonHeartBeat_OnClick(object sender, RoutedEventArgs e)
         {
-            HyPlayList.RemoveAllSong();
-            (bool isOk, JObject jsona) = await Common.ncapi.RequestAsync(CloudMusicApiProviders.PlaymodeIntelligenceList,
-                new Dictionary<string, object>() { { "pid", playList.plid }, { "id", intelsong } });
-            if (isOk)
+            _ = Task.Run(() =>
             {
-                List<NCSong> Songs = new List<NCSong>();
-                foreach (JToken token in jsona["data"])
+                Common.Invoke(async () =>
                 {
-                    NCSong ncSong = new NCSong()
+                    HyPlayList.RemoveAllSong();
+                    (bool isOk, JObject jsona) = await Common.ncapi.RequestAsync(
+                        CloudMusicApiProviders.PlaymodeIntelligenceList,
+                        new Dictionary<string, object>() {{"pid", playList.plid}, {"id", intelsong}});
+                    if (isOk)
                     {
-                        Album = new NCAlbum()
+                        List<NCSong> Songs = new List<NCSong>();
+                        foreach (JToken token in jsona["data"])
                         {
-                            cover = token["songInfo"]["al"]["picUrl"].ToString(),
-                            id = token["songInfo"]["al"]["id"].ToString(),
-                            name = token["songInfo"]["al"]["name"].ToString()
-                        },
-                        Artist = new List<NCArtist>(),
-                        LengthInMilliseconds = double.Parse(token["songInfo"]["dt"].ToString()),
-                        sid = token["songInfo"]["id"].ToString(),
-                        songname = token["songInfo"]["name"].ToString()
-                    };
-                    token["songInfo"]["ar"].ToList().ForEach(t =>
-                    {
-                        ncSong.Artist.Add(new NCArtist()
-                        {
-                            id = t["id"].ToString(),
-                            name = t["name"].ToString()
-                        });
-                    });
-                    Songs.Add(ncSong);
-                }
-
-                (bool isok, JObject json) = await Common.ncapi.RequestAsync(CloudMusicApiProviders.SongUrl,
-                    new Dictionary<string, object>() { { "id", string.Join(",", Songs.Select(t => t.sid)) }, { "br", Common.Setting.audioRate } });
-                ;
-                if (isok)
-                {
-                    List<JToken> arr = json["data"].ToList();
-                    for (int i = 0; i < Songs.Count; i++)
-                    {
-                        JToken token = arr.Find(jt => jt["id"].ToString() == Songs[i].sid);
-                        if (!token.HasValues)
-                        {
-                            continue;
+                            NCSong ncSong = NCSong.CreateFromJson(token["songInfo"]);
+                            Songs.Add(ncSong);
                         }
 
-                        NCSong ncSong = Songs[i];
+                        (bool isok, JObject json) = await Common.ncapi.RequestAsync(CloudMusicApiProviders.SongUrl,
+                            new Dictionary<string, object>()
+                                {{"id", string.Join(",", Songs.Select(t => t.sid))}, {"br", Common.Setting.audioRate}});
+                        ;
+                        if (isok)
+                        {
+                            List<JToken> arr = json["data"].ToList();
+                            for (int i = 0; i < Songs.Count; i++)
+                            {
+                                JToken token = arr.Find(jt => jt["id"].ToString() == Songs[i].sid);
+                                if (!token.HasValues)
+                                {
+                                    continue;
+                                }
 
-                        string tag = "";
-                        if (token["type"].ToString().ToLowerInvariant() == "flac")
-                        {
-                            tag = "SQ";
-                        }
-                        else
-                        {
-                            tag = (token["br"].ToObject<int>() / 1000).ToString() + "k";
-                        }
+                                NCSong ncSong = Songs[i];
 
-                        NCPlayItem ncp = new NCPlayItem()
-                        {
-                            tag = tag,
-                            Album = ncSong.Album,
-                            Artist = ncSong.Artist,
-                            subext = token["type"].ToString(),
-                            sid = ncSong.sid,
-                            songname = ncSong.songname,
-                            url = token["url"].ToString(),
-                            LengthInMilliseconds = ncSong.LengthInMilliseconds,
-                            size = token["size"].ToString(),
-                            md5 = token["md5"].ToString()
-                        };
-                        HyPlayList.AppendNCPlayItem(ncp);
+                                string tag = "";
+                                if (token["type"].ToString().ToLowerInvariant() == "flac")
+                                {
+                                    tag = "SQ";
+                                }
+                                else
+                                {
+                                    tag = (token["br"].ToObject<int>() / 1000).ToString() + "k";
+                                }
+
+                                NCPlayItem ncp = new NCPlayItem()
+                                {
+                                    tag = tag,
+                                    Album = ncSong.Album,
+                                    Artist = ncSong.Artist,
+                                    subext = token["type"].ToString(),
+                                    sid = ncSong.sid,
+                                    songname = ncSong.songname,
+                                    url = token["url"].ToString(),
+                                    LengthInMilliseconds = ncSong.LengthInMilliseconds,
+                                    size = token["size"].ToString(),
+                                    md5 = token["md5"].ToString()
+                                };
+                                HyPlayList.AppendNCPlayItem(ncp);
+                            }
+
+                            HyPlayList.SongAppendDone();
+
+                            HyPlayList.SongMoveTo(0);
+                        }
                     }
-
-                    HyPlayList.SongAppendDone();
-
-                    HyPlayList.SongMoveTo(0);
-                }
-            }
-
+                });
+            });
         }
 
         private void ButtonDownloadAll_OnClick(object sender, RoutedEventArgs e)
         {
             DownloadManager.AddDownload(songs);
+        }
+
+        private void LikeBtnClick(object sender, RoutedEventArgs e)
+        {
+            _ = Common.ncapi.RequestAsync(CloudMusicApiProviders.PlaylistSubscribe,
+                new Dictionary<string, object>() {{"id", playList.plid}, {"t", playList.subscribed ? "0" : "1"}});
+            playList.subscribed = !playList.subscribed;
         }
     }
 }

@@ -20,13 +20,10 @@
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
     <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
     <GenerateTestArtifacts>True</GenerateTestArtifacts>
-    <AppxBundle>Never</AppxBundle>
+    <AppxBundle>Always</AppxBundle>
     <AppxBundlePlatforms>x86|x64|arm|arm64</AppxBundlePlatforms>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
-    <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
-    <PackageCertificateKeyFile>HyPlayer_TemporaryKey.pfx</PackageCertificateKeyFile>
-    <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
-    <AppxPackageDir>D:\Workspace\Personal\HyPlayer\HyPlayer\HyPlayer\AppPackages\32</AppxPackageDir>
+    <AppxPackageDir>D:\Workspace\Personal\HyPlayer\HyPlayer\HyPlayer\AppPackages\33</AppxPackageDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
@@ -144,6 +141,12 @@
     <Compile Include="Controls\PlaylistItem.xaml.cs">
       <DependentUpon>PlaylistItem.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\SingleAlbum.xaml.cs">
+      <DependentUpon>SingleAlbum.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\SingleArtist.xaml.cs">
+      <DependentUpon>SingleArtist.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\SingleComment.xaml.cs">
       <DependentUpon>SingleComment.xaml</DependentUpon>
     </Compile>
@@ -158,6 +161,9 @@
     <Compile Include="HyPlayControl\HyPlayList.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\AlbumPage.xaml.cs">
+      <DependentUpon>AlbumPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\ArtistPage.xaml.cs">
       <DependentUpon>ArtistPage.xaml</DependentUpon>
@@ -253,6 +259,14 @@
     <Content Include="Assets\Wide310x150Logo.scale-125.png" />
     <Content Include="Assets\Wide310x150Logo.scale-150.png" />
     <Content Include="Assets\Wide310x150Logo.scale-400.png" />
+    <Page Include="Controls\SingleAlbum.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\SingleArtist.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Controls\SongListSelect.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -295,6 +309,10 @@
     <Page Include="MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Pages\AlbumPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Pages\ArtistPage.xaml">
       <SubType>Designer</SubType>

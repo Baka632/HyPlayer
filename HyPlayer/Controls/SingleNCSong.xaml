@@ -16,14 +16,17 @@
         DoubleTapped="Grid1_OnDoubleTapped"
         PointerEntered="UIElement_OnPointerEntered"
         BorderThickness="1"
-        PointerExited="Grid1_OnPointerExited"
-        >
+        PointerExited="Grid1_OnPointerExited">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="30"/>
-            <ColumnDefinition Width="70"/>
-            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition
+                Width="30" />
+            <ColumnDefinition
+                Width="70" />
+            <ColumnDefinition
+                Width="2*" />
             <ColumnDefinition />
-            <ColumnDefinition  Width="180"/>
+            <ColumnDefinition
+                Width="180" />
         </Grid.ColumnDefinitions>
         <TextBlock
             HorizontalAlignment="Center"
@@ -48,57 +51,72 @@
                 </ImageBrush>
             </Rectangle.Fill>
         </Rectangle>
-        <controls:DockPanel Dock="Top" Padding="7,0,0,0" Grid.Column="2">
-            <TextBlock controls:DockPanel.Dock="Top" Name="TextBlockSongname" FontSize="20" Text="歌曲名"/>
+        <StackPanel
+            Orientation="Vertical"
+            Padding="7,0,0,0"
+            Grid.Column="2">
             <TextBlock
-                Foreground="Gray"
-                Name="TextBlockAlbum"
-                controls:DockPanel.Dock="Bottom"
-                Margin="0,7,0,0"
-                FontSize="13"
-                Text="专辑名" />
+                Name="TextBlockSongname"
+                FontSize="20"
+                Text="歌曲名" />
             <TextBlock
                 Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
                 PointerPressed="TextBlockArtist_OnPointerPressed"
                 Name="TextBlockArtist"
-                controls:DockPanel.Dock="Bottom"
                 Margin="0,7,0,-6"
                 FontSize="12"
-                Text="歌手名"/>
-
-        </controls:DockPanel>
-        <StackPanel Orientation="Horizontal"
-                    Spacing="8"
+                Text="歌手名" />
+            <TextBlock
+                Foreground="Gray"
+                PointerPressed="TextBlockAlbum_OnPointerPressed"
+                Name="TextBlockAlbum"
+                Margin="0,7,0,0"
+                FontSize="13"
+                Text="专辑名" />
+        </StackPanel>
+        <StackPanel
+            Orientation="Horizontal"
+            Spacing="8"
             Grid.Column="4">
-            <Button x:Name="Comments"  Click="Comments_Click">
+            <Button
+                Background="Transparent"
+                x:Name="Comments"
+                Click="Comments_Click"
+                ToolTipService.ToolTip="评论">
                 <FontIcon
                     FontFamily="{StaticResource SymbolThemeFontFamily}"
                     Glyph="&#xE8F2;"></FontIcon>
             </Button>
             <Button
+                Background="Transparent"
                 x:Name="BtnPlay"
-                Click="ButtonBase_OnClick">
+                Click="ButtonBase_OnClick"
+                ToolTipService.ToolTip="播放">
                 <FontIcon
                     Name="PlayStateIcon"
                     FontFamily="{StaticResource SymbolThemeFontFamily}"
                     Glyph="&#xEDB5;"></FontIcon>
             </Button>
             <Button
+                Background="Transparent"
                 Click="BtnDownload_OnClick"
-                x:Name="BtnDownload">
+                x:Name="BtnDownload"
+                ToolTipService.ToolTip="下载">
                 <FontIcon
                     FontFamily="{StaticResource SymbolThemeFontFamily}"
                     Glyph="&#xE118;"></FontIcon>
             </Button>
             <Button
+                Background="Transparent"
                 Click="Btn_Sub_OnClick"
-                x:Name="BtnSub">
+                x:Name="BtnSub"
+                ToolTipService.ToolTip="添加到歌单">
                 <FontIcon
                     FontFamily="{StaticResource SymbolThemeFontFamily}"
                     Glyph="&#xE1DA;"></FontIcon>
             </Button>
 
         </StackPanel>
-        
+
     </Grid>
 </UserControl>
